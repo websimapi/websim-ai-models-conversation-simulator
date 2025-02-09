@@ -46,6 +46,23 @@ function selectSecondModel(firstModel) {
   return others[getRandomInt(0, others.length - 1)];
 }
 
+// A very, very, very, very, very, very, very, very, very large list of diverse topics.
+const extendedTopicsList = [
+  "astronomy discoveries", "quantum physics", "deep-sea exploration", "ancient civilizations",
+  "futuristic technology", "classical literature", "sustainable agriculture", "virtual reality",
+  "urban development", "medieval art", "philosophical debates", "music theory", "space travel",
+  "robotics", "mythical creatures", "avant-garde fashions", "cosmology", "machine learning",
+  "abstract painting", "global cuisines", "environmental conservation", "modern architecture",
+  "psychology", "oceanography", "historical mysteries", "theoretical mathematics",
+  "cybersecurity", "biotechnology", "renewable energy", "political science", "sports analytics",
+  "economic theories", "lifestyle design", "healthcare innovations", "sociology", "linguistics",
+  "virtual communities", "digital art", "literary criticism", "ethics in AI", "dystopian futures",
+  "cultural anthropology", "global economics", "evolutionary biology", "genetics", "wildlife conservation",
+  "space colonization", "cryptocurrencies", "emerging art movements", "philosophy of science", "martial arts",
+  "public policy", "geopolitics", "sustainable design", "computational theory", "data visualization",
+  "privacy rights", "the evolution of language", "entertainment industry", "social movements", "innovation in education"
+];
+
 // Function to call the external LLM endpoint
 /**
  * Sends a POST request with role and conversation context.
@@ -54,11 +71,21 @@ function selectSecondModel(firstModel) {
  * @returns {string} AI response
  */
 async function fetchAIResponse(model, conversationHistory) {
+  // Create the base conversation context string.
+  let contextString = conversationHistory.length > 0 
+    ? conversationHistory.map(item => `${item.role}: ${item.text}`).join('\n')
+    : "No prior conversation context available.";
+
+  // If context is minimal, instruct the LLM to generate its own context based on an extensive list of topics.
+  if (conversationHistory.length === 0) {
+    contextString += "\n\nSince there is very little context provided, please feel free to create your own context about what to talk about. Here is a very large and diverse list of topics for inspiration: " + extendedTopicsList.join(", ") + ".";
+  }
+  
   const promptMessage = `You are ${model.name}. You are playing the role of an AI engaging in a conversation simulation.
 Current conversation context: 
-${conversationHistory.map(item => `${item.role}: ${item.text}`).join('\n')}
+${contextString}
 
-Based on this conversation, provide your next message.`;
+Based on this conversation, provide your next message in a natural and engaging style.`;
   
   try {
     const response = await fetch('/api/ai_completion', {
@@ -108,7 +135,7 @@ function addMessage(model, text, sideClass, conversationHistory) {
   
   const avatar = document.createElement('div');
   avatar.classList.add('avatar');
-  avatar.textContent = model.name.charAt(0);
+  avatar.textContent = model.name ? model.name.charAt(0) : "S";
   
   const msgText = document.createElement('div');
   msgText.classList.add('text');
@@ -120,7 +147,7 @@ function addMessage(model, text, sideClass, conversationHistory) {
   conversationEl.scrollTop = conversationEl.scrollHeight;
   
   // Append to conversation history for future context
-  conversationHistory.push({ role: model.name, text });
+  conversationHistory.push({ role: model.name || "System", text });
 }
 
 // Main conversation loop
